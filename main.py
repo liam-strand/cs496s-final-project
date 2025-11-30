@@ -5,6 +5,7 @@ import sounddevice as sd  # type: ignore
 from stomp_detector import StompDetector
 from classifier import DummyClassifier
 from controller import InputController
+import pyautogui
 
 
 def parse_args():
@@ -26,6 +27,9 @@ def main():
     args = parse_args()
 
     print("Initializing Stomp Detection System...")
+
+    pyautogui.confirm("Press OK to start the stomp detection system.")
+
     print(f"Device: {args.device}, SR: {args.sr}, Threshold: {args.threshold}")
 
     # Parameters

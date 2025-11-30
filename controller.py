@@ -21,7 +21,7 @@ class InputController:
             "downright": ["down", "right"],
             "leftright": ["left", "right"],
             "updown": ["up", "down"],
-            "center": [],  # No action? Or maybe space?
+            "center": [],  # No action
         }
 
     def press(self, direction: str):
@@ -32,13 +32,8 @@ class InputController:
         if keys:
             if self.verbose:
                 print(f"InputController: Pressing {keys} for '{direction}'")
-            for key in keys:
-                pyautogui.keyDown(key)
 
-            time.sleep(0.05)
-
-            for key in keys:
-                pyautogui.keyUp(key)
+            pyautogui.press(keys)
         else:
             if self.verbose:
                 print(f"InputController: Unknown direction {direction}")
