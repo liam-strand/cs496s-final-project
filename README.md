@@ -1,30 +1,24 @@
-## Stereo Recording Utility
+# CS496S Final Project
 
-This project provides a command-line helper for capturing stereo audio snippets for a fixed set of directions and direction pairs. Each take is recorded until you press Enter, then saved as `{NAME}_{DIRECTION}.wav` inside a destination folder of your choice.
+## Prerequisites
 
-### Requirements
+- Python 3.13 or higher
 
-- Python 3.13+
-- `sounddevice`, `numpy`, and `scipy` (installed automatically via `pip install -e .` or `uv pip install .`)
-- An audio interface with at least two input channels
+## Setup
 
-### Usage
+### 1. Install uv
 
-1. Activate your virtual environment and install dependencies:
+`uv` is a fast Python package installer and resolver. Install it following the docs: [uv documentation](https://github.com/astral-sh/uv).
 
-```bash
-uv pip install .
-```
-
-2. Run the recorder, passing the directory where WAV files should be stored:
+### 2. Clone the Repository
 
 ```bash
-python main.py recordings/
+git clone https://github.com/liam-strand/cs496s-final-project.git
+cd cs496s-final-project
 ```
 
-3. Enter the shared NAME for the session when prompted. For each direction you will:
-	- Press Enter to start
-	- Speak or play the audio cue
-	- Press Enter again to stop and save the take
+### 3. Run the Code (uv does the rest)
 
-You can stop the session at any time with `Ctrl+C`; completed takes remain on disk.
+```bash
+uv run main.py
+```
