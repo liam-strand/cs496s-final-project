@@ -51,46 +51,11 @@ class StompDetector:
             return []
 
         # Compute RMS
-        rms = librosa.feature.rms(
+        energy = librosa.feature.rms(
             y=y, frame_length=self.frame_len, hop_length=self.hop_len, center=True
         )[0]
 
-        # Normalize
-        max_rms = np.max(rms)
-        if max_rms > 1e-4:  # Avoid amplifying silence
-            energy = rms / max_rms
+        if np.max(energy) >= self.energy_threshold:
+            return [audio]
         else:
-            energy = rms  # It's all zeros/noise
-
-        # Find peaks
-        peaks, _ = find_peaks(energy, height=self.energy_threshold)
-
-        detected_stomps = []
-        current_time = time.time()
-
-        # Calculate time of each peak relative to NOW
-        # audio ends at current_time
-        for peak_frame in peaks:
-            center_sample = peak_frame * self.hop_len
-
-            # Skip if peak is too close to edges (cannot extract full window)
-            start = center_sample - self.half_win
-            end = center_sample + self.half_win
-
-            if start < 0 or end > len(y):
-                continue
-
-            # Calculate absolute time of this peak
-            samples_from_end = len(y) - center_sample
-            peak_time = current_time - (samples_from_end / self.sr)
-
-            # Check separation
-            if (peak_time - self.last_stomp_time) * 1000.0 >= self.min_stomp_sep_ms:
-                # It's a new stomp
-                self.last_stomp_time = peak_time
-
-                # Extract segment
-                segment = audio[start:end]
-                detected_stomps.append(segment)
-
-        return detected_stomps
+            return []
