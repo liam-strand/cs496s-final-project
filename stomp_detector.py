@@ -1,7 +1,5 @@
 import numpy as np
 import librosa
-from scipy.signal import find_peaks
-import time
 
 
 class StompDetector:
@@ -9,7 +7,7 @@ class StompDetector:
 
     def __init__(
         self,
-        sr: int = 44100,
+        sr: int = 48000,
         win_ms: int = 200,
         frame_ms: int = 20,
         hop_ms: int = 10,
@@ -55,7 +53,11 @@ class StompDetector:
             y=y, frame_length=self.frame_len, hop_length=self.hop_len, center=True
         )[0]
 
+        resampled_audio = librosa.resample(
+            audio, orig_sr=self.sr, target_sr=16000, axis=0
+        )
+
         if np.max(energy) >= self.energy_threshold:
-            return [audio]
+            return [resampled_audio]
         else:
             return []

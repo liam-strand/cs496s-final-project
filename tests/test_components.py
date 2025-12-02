@@ -66,14 +66,14 @@ def test_deduplication(mocker):
 
 
 def test_controller(mocker):
-    from controller import InputController
+    from controller import KeyboarfdController
 
     # Mock pyautogui
     mock_down = mocker.patch("pyautogui.keyDown")
     mock_up = mocker.patch("pyautogui.keyUp")
     mocker.patch("time.sleep")
 
-    controller = InputController(verbose=False)
+    controller = KeyboarfdController(verbose=False)
 
     # Test single direction
     controller.press("left")
