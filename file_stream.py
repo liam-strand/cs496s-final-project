@@ -4,15 +4,13 @@ import librosa
 
 class FileStream:
     def __init__(self, file_path, blocksize):
-        print(f"Loading {file_path}...")
-        self.data, self.file_sr = librosa.load(file_path, sr=None, mono=False)
+        self.data, self.file_sr = librosa.load(file_path, sr=16000, mono=False)
         if self.data.ndim == 1:
             # Convert mono to stereo by duplicating channels
             self.data = np.stack([self.data, self.data], axis=-1)
         else:
             self.data = self.data.T  # (channels, samples) -> (samples, channels)
 
-        self.sr = self.file_sr
         self.blocksize = blocksize
         self.position = 0
         self.finished = False

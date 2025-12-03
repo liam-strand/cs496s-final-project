@@ -14,8 +14,8 @@ from scipy.io import wavfile
 
 
 BASE_DIRECTIONS = ["up", "down", "left", "right"]
-PAIR_DIRECTIONS = ["".join(pair) for pair in itertools.combinations(BASE_DIRECTIONS, 2)]
-ALL_DIRECTIONS = BASE_DIRECTIONS + PAIR_DIRECTIONS + ["center"]
+# PAIR_DIRECTIONS = ["".join(pair) for pair in itertools.combinations(BASE_DIRECTIONS, 2)]
+ALL_DIRECTIONS = BASE_DIRECTIONS
 
 
 def parse_args() -> argparse.Namespace:

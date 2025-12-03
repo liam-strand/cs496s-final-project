@@ -59,7 +59,7 @@ class KeyboardController:
 class DummyController:
     """Controls keyboard input based on detected directions."""
 
-    def __init__(self, cooldown: float = 0.3):
+    def __init__(self, cooldown: float = 0.2):
         self.cooldown = cooldown
         self.last_press_time = 0.0
 

@@ -62,7 +62,7 @@ class LeftRightClassifier(MLPClassifier):
 
 
 class FiveDirectionClassifier(MLPClassifier):
-    BASIC_MOVES = ["center", "left", "right", "up", "down"]
+    BASIC_MOVES = ["left", "right", "up", "down"]
 
     def __init__(self):
         with open("models/mlp_five_directions.onnx", "rb") as f:

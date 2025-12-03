@@ -4,8 +4,9 @@ import time
 import numpy as np
 import sounddevice as sd  # type: ignore
 from stomp_detector import StompDetector
-from classifier import LeftRightClassifier
-from controller import KeyboardController
+from classifier import FiveDirectionClassifier as Classifier
+from controller import KeyboardController as Controller
+from file_stream import FileStream
 
 
 def parse_args():
@@ -15,13 +16,6 @@ def parse_args():
     )
     parser.add_argument(
         "--input-file", type=str, default=None, help="Path to input audio file"
-    )
-    parser.add_argument("--sr", type=int, default=None, help="Sampling rate")
-    parser.add_argument(
-        "--threshold",
-        type=float,
-        default=0.3,
-        help="Energy threshold for stomp detection",
     )
     parser.add_argument(
         "--list-devices",
@@ -63,7 +57,7 @@ def select_audio_device():
 
 
 def calibrate(stream, step_frames, duration=3.0):
-    """Calibrates the noise floor and returns a recommended threshold."""
+    """Calibrates the noise floor and returns the max noise RMS."""
     print(f"Calibrating background noise for {duration} seconds...")
     print("Please remain silent...")
 
@@ -87,11 +81,7 @@ def calibrate(stream, step_frames, duration=3.0):
             max_energy = rms
 
     print(f"Calibration complete. Max noise RMS: {max_energy:.5f}")
-
-    # Set threshold slightly above max noise
-    threshold = max(max_energy * 3.0, 0.02)
-    print(f"Setting threshold to: {threshold:.5f}")
-    return threshold
+    return max_energy
 
 
 def main():
@@ -108,22 +98,20 @@ def main():
         device_id = select_audio_device()
 
     # Determine sample rate
-    sr = args.sr
-    if sr is None:
-        try:
-            if device_id is not None:
-                device_info = sd.query_devices(device_id, "input")
-                sr = int(device_info["default_samplerate"])
-            else:
-                # If using default device, query it
-                device_info = sd.query_devices(kind="input")
-                sr = int(device_info["default_samplerate"])
-        except Exception as e:
-            print(
-                f"Warning: Could not determine default sample rate: {e}",
-                file=sys.stderr,
-            )
-            sr = 44100
+    try:
+        if device_id is not None:
+            device_info = sd.query_devices(device_id, "input")
+            sr = int(device_info["default_samplerate"])
+        else:
+            # If using default device, query it
+            device_info = sd.query_devices(kind="input")
+            sr = int(device_info["default_samplerate"])
+    except Exception as e:
+        print(
+            f"Warning: Could not determine default sample rate: {e}",
+            file=sys.stderr,
+        )
+        sr = 48000
 
     print(f"Device: {device_id if device_id is not None else 'Default'}, SR: {sr}")
 
@@ -138,9 +126,8 @@ def main():
     # Initialize components
     try:
         # We will set the threshold after calibration
-        detector = StompDetector(sr=sr, energy_threshold=args.threshold)
-        classifier = LeftRightClassifier()
-        controller = KeyboardController()
+        classifier = Classifier()
+        controller = Controller()
 
         # Buffer to hold the rolling window
         audio_buffer = np.zeros((window_frames, channels), dtype=np.float32)
@@ -149,15 +136,10 @@ def main():
 
         # Open stream
         if args.input_file:
-            from file_stream import FileStream
-
             stream_ctx = FileStream(args.input_file, step_frames)
             # Update sr to match file if not overridden
             if args.sr is None:
                 sr = stream_ctx.sr
-                # Re-init detector with correct SR
-                detector = StompDetector(sr=sr, energy_threshold=args.threshold)
-                # Re-calc window frames if SR changed
                 window_frames = int((window_ms / 1000.0) * sr)
                 audio_buffer = np.zeros((window_frames, channels), dtype=np.float32)
 
@@ -170,14 +152,18 @@ def main():
                 dtype="float32",
             )
 
+        detector = StompDetector(sr=sr, energy_threshold=7.0)
+
         with stream_ctx as stream:
             if args.input_file:
                 print(
                     "Using file input. Skipping calibration and using default/provided threshold."
                 )
             else:
-                new_threshold = calibrate(stream, step_frames)
-                detector.energy_threshold = new_threshold
+                noise_level = calibrate(stream, step_frames)
+                # Initialize noise level slightly higher to avoid immediate triggers
+                detector.noise_level = max(noise_level, 0.001)
+                print(f"Setting initial noise level to: {detector.noise_level:.5f}")
 
             while True:
                 try:
